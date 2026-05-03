@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Email Writer Agent — AgentHub India</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --card: #16161f;
+    --border: #22222e;
+    --accent: #ff6b35;
+    --accent2: #00d4aa;
+    --text: #f0f0f5;
+    --muted: #7a7a8c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* NAV */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 5%;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem;
+  }
+  .logo span { color: var(--accent); }
+  .agent-badge {
+    background: rgba(255,107,53,0.1); border: 1px solid rgba(255,107,53,0.3);
+    color: var(--accent); font-size: 0.75rem; font-weight: 600;
+    padding: 5px 12px; border-radius: 100px;
+  }
+  .back-link {
+    color: var(--muted); text-decoration: none; font-size: 0.85rem;
+    display: flex; align-items: center; gap: 6px; transition: color 0.2s;
+  }
+  .back-link:hover { color: var(--text); }
+
+  /* MAIN */
+  .container {
+    max-width: 780px; margin: 0 auto;
+    padding: 48px 20px 80px;
+  }
+
+  .page-header { margin-bottom: 36px; }
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(1.8rem, 5vw, 2.6rem);
+    font-weight: 800; letter-spacing: -1px;
+    margin-bottom: 10px;
+  }
+  .page-title span { color: var(--accent); }
+  .page-sub { color: var(--muted); font-size: 0.95rem; line-height: 1.6; }
+
+  /* FORM */
+  .form-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 32px;
+    margin-bottom: 24px;
+  }
+  .form-group { margin-bottom: 20px; }
+  label {
+    display: block; font-size: 0.82rem; font-weight: 600;
+    color: var(--muted); letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  select, input, textarea {
+    width: 100%; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px;
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem; padding: 12px 16px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none; appearance: none;
+  }
+  select:focus, input:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(255,107,53,0.12);
+  }
+  textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+
+  /* TONE PILLS */
+  .tone-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tone-pill {
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--muted); padding: 7px 16px;
+    border-radius: 100px; font-size: 0.82rem; font-weight: 500;
+    cursor: pointer; transition: all 0.2s; user-select: none;
+  }
+  .tone-pill.active {
+    background: rgba(255,107,53,0.12);
+    border-color: rgba(255,107,53,0.5);
+    color: var(--accent);
+  }
+
+  /* GENERATE BTN */
+  .generate-btn {
+    width: 100%; padding: 16px;
+    background: var(--accent); color: #fff; border: none;
+    border-radius: 12px; font-size: 1rem; font-weight: 700;
+    font-family: 'Syne', sans-serif; cursor: pointer;
+    transition: all 0.2s; letter-spacing: 0.3px;
+    box-shadow: 0 0 30px rgba(255,107,53,0.25);
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .generate-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 0 40px rgba(255,107,53,0.4);
+  }
+  .generate-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  /* LOADER */
+  .loader {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  .loading .loader { display: block; }
+  .loading .btn-text { display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* OUTPUT */
+  .output-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 32px;
+    display: none; animation: fadeUp 0.4s ease;
+  }
+  .output-card.visible { display: block; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .output-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .output-title {
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .output-title .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent2);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+  }
+  .copy-btn {
+    background: rgba(0,212,170,0.1); border: 1px solid rgba(0,212,170,0.3);
+    color: var(--accent2); padding: 7px 16px;
+    border-radius: 8px; font-size: 0.82rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+  }
+  .copy-btn:hover { background: rgba(0,212,170,0.2); }
+  .copy-btn.copied { color: var(--accent2); }
+
+  .email-subject {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 0.85rem; color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .email-subject strong { color: var(--text); }
+
+  .email-body {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px;
+    font-size: 0.92rem; line-height: 1.8; color: var(--text);
+    white-space: pre-wrap; word-break: break-word;
+    min-height: 200px;
+  }
+
+  .regenerate-btn {
+    width: 100%; margin-top: 16px; padding: 12px;
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 10px;
+    font-size: 0.9rem; font-weight: 500; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; transition: all 0.2s;
+  }
+  .regenerate-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* FOOTER */
+  .agent-footer {
+    text-align: center; margin-top: 48px;
+    color: var(--muted); font-size: 0.82rem;
+  }
+  .agent-footer a { color: var(--accent); text-decoration: none; }
+
+  /* ERROR */
+  .error-msg {
+    background: rgba(255,80,80,0.1); border: 1px solid rgba(255,80,80,0.3);
+    color: #ff6b6b; border-radius: 10px; padding: 12px 16px;
+    font-size: 0.88rem; margin-top: 16px; display: none;
+  }
+  .error-msg.visible { display: block; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Agent<span>Hub</span> India</div>
+  <div class="agent-badge">📧 Email Writer Agent</div>
+  <a href="#" class="back-link">← Back</a>
+</nav>
+
+<div class="container">
+  <div class="page-header">
+    <div class="page-title">Email Writer <span>Agent</span></div>
+    <p class="page-sub">Apni details daalo — AI seconds mein ek professional email likh dega. Hindi aur English dono mein!</p>
+  </div>
+
+  <!-- FORM -->
+  <div class="form-card">
+
+    <div class="row">
+      <div class="form-group">
+        <label>Language / भाषा</label>
+        <select id="language">
+          <option value="english">English</option>
+          <option value="hindi">Hindi (हिंदी)</option>
+          <option value="hinglish">Hinglish (Mix)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Email Type</label>
+        <select id="emailType">
+          <option value="job_application">Job Application</option>
+          <option value="follow_up">Follow Up</option>
+          <option value="client_proposal">Client Proposal</option>
+          <option value="complaint">Complaint</option>
+          <option value="thank_you">Thank You</option>
+          <option value="introduction">Self Introduction</option>
+          <option value="resignation">Resignation</option>
+          <option value="request">Request / Inquiry</option>
+          <option value="apology">Apology</option>
+          <option value="custom">Custom (Apna likho)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Tone / Style</label>
+      <div class="tone-pills">
+        <div class="tone-pill active" data-tone="professional">Professional</div>
+        <div class="tone-pill" data-tone="friendly">Friendly</div>
+        <div class="tone-pill" data-tone="formal">Formal</div>
+        <div class="tone-pill" data-tone="persuasive">Persuasive</div>
+        <div class="tone-pill" data-tone="concise">Concise</div>
+        <div class="tone-pill" data-tone="polite">Polite</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="form-group">
+        <label>Sender Name (Aapka Naam)</label>
+        <input type="text" id="senderName" placeholder="e.g. Rahul Sharma">
+      </div>
+      <div class="form-group">
+        <label>Receiver Name / Company</label>
+        <input type="text" id="receiverName" placeholder="e.g. HR Manager, TCS">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Email ka Purpose / Details</label>
+      <textarea id="purpose" placeholder="Kya likhna chahte ho? Jaise: Software Engineer ki job ke liye apply karna hai, 3 saal ka experience hai Python mein..."></textarea>
+    </div>
+
+    <button class="generate-btn" id="generateBtn" onclick="generateEmail()">
+      <div class="loader" id="loader"></div>
+      <span class="btn-text">✨ Email Generate Karo</span>
+    </button>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="output-card" id="outputCard">
+    <div class="output-header">
+      <div class="output-title">
+        <div class="dot"></div>
+        Generated Email
+      </div>
+      <button class="copy-btn" id="copyBtn" onclick="copyEmail()">📋 Copy Email</button>
+    </div>
+    <div class="email-subject" id="emailSubject"></div>
+    <div class="email-body" id="emailBody"></div>
+    <button class="regenerate-btn" onclick="generateEmail()">🔄 Dobara Generate Karo</button>
+  </div>
+
+  <div class="agent-footer">
+    Powered by <a href="#">AgentHub India</a> — AI Agents for Everyone
+  </div>
+</div>
+
+<script>
+  let selectedTone = 'professional';
+
+  // Tone pills
+  document.querySelectorAll('.tone-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.tone-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      selectedTone = pill.dataset.tone;
+    });
+  });
+
+  async function generateEmail() {
+    const language = document.getElementById('language').value;
+    const emailType = document.getElementById('emailType').value;
+    const senderName = document.getElementById('senderName').value.trim();
+    const receiverName = document.getElementById('receiverName').value.trim();
+    const purpose = document.getElementById('purpose').value.trim();
+
+    if (!purpose) {
+      showError('Please email ka purpose/details likho!');
+      return;
+    }
+
+    const btn = document.getElementById('generateBtn');
+    btn.classList.add('loading');
+    btn.disabled = true;
+    hideError();
+    document.getElementById('outputCard').classList.remove('visible');
+
+    const langMap = {
+      english: 'English',
+      hindi: 'Hindi (Devanagari script)',
+      hinglish: 'Hinglish (mix of Hindi and English, Roman script)'
+    };
+
+    const typeMap = {
+      job_application: 'Job Application',
+      follow_up: 'Follow Up',
+      client_proposal: 'Client Proposal',
+      complaint: 'Complaint',
+      thank_you: 'Thank You',
+      introduction: 'Self Introduction',
+      resignation: 'Resignation',
+      request: 'Request / Inquiry',
+      apology: 'Apology',
+      custom: 'Custom'
+    };
+
+    const prompt = `You are a professional email writer. Write a ${typeMap[emailType]} email with the following details:
+
+Language: ${langMap[language]}
+Tone: ${selectedTone}
+Sender Name: ${senderName || 'Not specified'}
+Receiver Name/Company: ${receiverName || 'Not specified'}
+Purpose/Details: ${purpose}
+
+Instructions:
+- Write a complete, ready-to-send email
+- Match the tone exactly: ${selectedTone}
+- Use proper email format with greeting, body, and closing
+- If language is Hindi, write fully in Hindi Devanagari script
+- If language is Hinglish, mix Hindi and English naturally in Roman script
+- If language is English, write in professional English
+
+Respond in this exact format:
+SUBJECT: [email subject line]
+---
+[complete email body]`;
+
+    try {
+      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyCslblMBIgwdI0IMS2d3OlktD_xGTIcDMg', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+
+      const data = await response.json();
+      const fullText = data.candidates[0].content.parts[0].text;
+
+      // Parse subject and body
+      const parts = fullText.split('---');
+      let subject = '', body = '';
+
+      if (parts.length >= 2) {
+        subject = parts[0].replace('SUBJECT:', '').trim();
+        body = parts.slice(1).join('---').trim();
+      } else {
+        subject = 'Email';
+        body = fullText;
+      }
+
+      document.getElementById('emailSubject').innerHTML = `<strong>Subject:</strong> ${subject}`;
+      document.getElementById('emailBody').textContent = body;
+      document.getElementById('outputCard').classList.add('visible');
+      document.getElementById('outputCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    } catch (err) {
+      showError('Kuch galat hua. Please dobara try karo.');
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  }
+
+  function copyEmail() {
+    const subject = document.getElementById('emailSubject').innerText;
+    const body = document.getElementById('emailBody').textContent;
+    const full = subject + '\n\n' + body;
+    navigator.clipboard.writeText(full).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = '✅ Copied!';
+      setTimeout(() => { btn.textContent = '📋 Copy Email'; }, 2000);
+    });
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+  function hideError() {
+    document.getElementById('errorMsg').classList.remove('visible');
+  }
+</script>
+</body>
+</html>
